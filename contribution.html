@@ -32,12 +32,21 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.05); max-width: 500px;
       margin: -35px auto 30px; position: relative; border: 1px solid rgba(0,0,0,0.05);
     }
-    .form-control, .form-select { border-radius: 10px; border: 1px solid #E2E8F0; background-color: #F8FAFC; }
+    .form-control, .form-select { border-radius: 10px; border: 1px solid #E2E8F0; background-color: #F8FAFC; padding: 10px 15px; }
     .form-control:focus, .form-select:focus { background-color: #FFFFFF; border-color: var(--fintech-accent); box-shadow: 0 0 0 4px rgba(99, 91, 255, 0.1); }
     .btn-fintech { background-color: var(--fintech-primary); color: white; border-radius: 10px; padding: 12px; font-weight: 500; border: none; transition: 0.3s; }
-    .btn-fintech:hover { background-color: #06182c; color: white; }
+    .btn-fintech:hover { background-color: #06182c; color: white; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(10,37,64,0.2); }
     #systemLoading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .info-card { background: #E6F0FF; border-left: 4px solid var(--fintech-accent); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; }
+    
+    /* UX/UI: Modern Info Card */
+    .info-card { background: #F0FDF4; border: 1px solid #BBF7D0; padding: 16px; border-radius: 12px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+    
+    /* UX/UI: Modern Back Button */
+    .modern-back-btn { font-size: 0.9rem; font-weight: 500; transition: all 0.2s ease; cursor: pointer; color: #64748B; margin-bottom: 20px; }
+    .modern-back-btn:hover { color: var(--fintech-primary); transform: translateX(-4px); }
+    .back-icon { background: #F1F5F9; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 8px; color: #64748B; transition: 0.2s; }
+    .modern-back-btn:hover .back-icon { background: #E2E8F0; color: var(--fintech-primary); }
   </style>
 </head>
 <body>
@@ -52,19 +61,29 @@
   <h5 class="fw-bold mb-1">กองทุนสวัสดิการชุมชน</h5>
   <p class="opacity-75 small mb-0">ระบบทำรายการสมทบเงินออนไลน์</p>
 </div>
-<!-- วางไว้ด้านบนสุดของ card-box ในหน้า contribution และ claim -->
-<button class="btn btn-sm btn-light mb-3 border text-muted" onclick="window.location.href='https://liff.line.me/2010764982-RCKkyPZG'">
-  <i class="fa-solid fa-arrow-left me-1"></i>กลับหน้าหลัก
-</button>
-  
+
 <div class="container mb-5">
   <div class="card-box">
-    <h6 class="mb-4 text-center fw-bold" style="color: var(--fintech-primary);"><i class="fa-solid fa-wallet me-2"></i>ฟอร์มแจ้งชำระเงินสมทบ</h6>
+    
+    <!-- 🔙 ปุ่มกลับหน้าหลัก (Modern UI Redesign) -->
+    <a href="https://liff.line.me/2010764982-RCKkyPZG" class="text-decoration-none d-inline-flex align-items-center modern-back-btn">
+      <div class="back-icon"><i class="fa-solid fa-arrow-left"></i></div>
+      <span>กลับหน้าหลัก</span>
+    </a>
+
+    <h6 class="mb-4 text-center fw-bold" style="color: var(--fintech-primary);">
+      <i class="fa-solid fa-wallet me-2 text-success"></i>ฟอร์มแจ้งชำระเงินสมทบ
+    </h6>
     
     <div class="info-card">
-      <strong>สถานะการเงินของคุณ:</strong><br>
-      <span class="text-muted">ยอดที่สมทบไปแล้ว: <span id="paidAmount" class="fw-bold text-success">0 บาท</span></span><br>
-      <span class="text-muted" id="maxAmountText">ยอดค้างชำระสูงสุดที่คุณจ่ายได้: <span class="fw-bold text-danger">กำลังคำนวณ...</span></span>
+      <div class="info-row border-bottom pb-2 border-success border-opacity-25">
+        <span class="text-secondary"><i class="fa-solid fa-piggy-bank me-2"></i>ยอดที่สมทบไปแล้ว</span>
+        <span id="paidAmount" class="fw-bold text-success">0 บาท</span>
+      </div>
+      <div class="info-row pt-1">
+        <span class="text-secondary" style="font-size: 0.8rem;">ยอดค้างชำระสูงสุดที่คุณจ่ายได้</span>
+        <span id="maxAmountText" class="fw-bold text-danger">กำลังคำนวณ...</span>
+      </div>
     </div>
     
     <form id="contribForm" onsubmit="handleContribSubmit(event)">
@@ -72,21 +91,21 @@
       <input type="hidden" id="fullName" name="fullName">
 
       <div class="mb-3">
-        <label class="form-label small text-muted">ชื่อ-นามสกุลสมาชิก</label>
-        <input type="text" class="form-control bg-light" id="displayFullName" readonly>
+        <label class="form-label small text-muted fw-medium">ชื่อ-นามสกุลสมาชิก</label>
+        <input type="text" class="form-control bg-light text-muted" id="displayFullName" readonly>
       </div>
 
       <div class="mb-3">
-        <label class="form-label small text-muted">จำนวนเงินที่ต้องการสมทบ</label>
+        <label class="form-label small text-muted fw-medium">จำนวนเงินที่ต้องการสมทบ</label>
         <div class="input-group">
           <input type="number" class="form-control" id="amount" name="amount" min="1" placeholder="ระบุจำนวนเงิน" required oninput="validateAmount(this)">
-          <span class="input-group-text">บาท</span>
+          <span class="input-group-text bg-white text-muted border-start-0">บาท</span>
         </div>
-        <div class="form-text small text-secondary" id="amountHelper">ระบบจำกัดยอดไม่เกินยอดค้างชำระจนถึงปีปัจจุบัน</div>
+        <div class="form-text small text-secondary mt-1"><i class="fa-solid fa-circle-info me-1"></i>ระบบจำกัดยอดไม่เกินยอดค้างชำระจนถึงปีปัจจุบัน</div>
       </div>
 
       <div class="mb-3">
-        <label class="form-label small text-muted">ช่องทางการชำระเงิน</label>
+        <label class="form-label small text-muted fw-medium">ช่องทางการชำระเงิน</label>
         <select class="form-select" id="paymentMethod" name="paymentMethod" required onchange="toggleSlipSection()">
           <option value="" disabled selected>-- เลือกช่องทางชำระเงิน --</option>
           <option value="โอนเงินผ่านธนาคาร">โอนเงินผ่านธนาคาร (แนบสลิป)</option>
@@ -95,12 +114,12 @@
       </div>
 
       <!-- ส่วนแนบสลิป -->
-      <div class="mb-4 p-3 bg-light rounded-3 border" id="slipSection" style="display: none;">
-        <label class="form-label small fw-bold text-dark"><i class="fa-solid fa-receipt me-1"></i>แนบหลักฐานการโอนเงิน (สลิป)</label>
-        <input type="file" class="form-control form-control-sm" id="slipFile" accept="image/*" onchange="convertImageToBase64(this)">
+      <div class="mb-4 p-3 rounded-3 border border-primary border-opacity-10" id="slipSection" style="display: none; background: #F8FAFC;">
+        <label class="form-label small fw-bold text-dark"><i class="fa-solid fa-receipt me-1 text-primary"></i>แนบหลักฐานการโอนเงิน (สลิป)</label>
+        <input type="file" class="form-control form-control-sm mb-1" id="slipFile" accept="image/*" onchange="convertImageToBase64(this)">
         <input type="hidden" id="slipBase64" name="slipBase64">
         <input type="hidden" id="slipFileName" name="slipFileName">
-        <div class="form-text small text-muted">รองรับไฟล์รูปภาพ (JPG, PNG)</div>
+        <div class="form-text" style="font-size: 0.75rem; color: #94A3B8;">รองรับไฟล์รูปภาพ (JPG, PNG) ขนาดไม่เกิน 5MB</div>
       </div>
 
       <button type="submit" class="btn btn-fintech w-100" id="submitBtn">ยืนยันการทำรายการสมทบ</button>
@@ -109,11 +128,11 @@
 </div>
 
 <script>
-  // *อย่าลืมอัปเดต LIFF_ID และ GAS_API_URL ล่าสุดของคุณ
   const LIFF_ID = "2010764982-BltKP85l"; 
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxiDF94iQfQU-zvq5ASAzk9ZSTdVX8lcyI0KLIGEpMazkytVsZj8JSoyg9dZvHRslPI/exec"; 
+  // ⚠️ ปรับ GAS_API_URL ให้เป็นเส้นเดียวกับหน้า index เพื่อให้ดึงข้อมูลชุดเดียวกัน
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycby8zcZH7SE12h5x3unR3zOgGGn102CHzz-hjnHdbbL1utDjOClo10NX2lX7WepoUlod/exec"; 
   
-  let currentMaxAllowed = 0; // เก็บค่าเพดานสูงสุดที่จ่ายได้
+  let currentMaxAllowed = 0;
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -123,7 +142,6 @@
         const uid = profile.userId;
         document.getElementById('uid').value = uid;
 
-        // ดึงสถานะการเงินของสมาชิก
         const response = await fetch(GAS_API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -143,18 +161,18 @@
           document.getElementById('amount').max = currentMaxAllowed;
           
           if (currentMaxAllowed <= 0) {
-            document.getElementById('maxAmountText').innerHTML = `<span class="fw-bold text-success">คุณได้ชำระครบถ้วนแล้ว ไม่มีค้างชำระปีปัจจุบัน</span>`;
+            document.getElementById('maxAmountText').innerHTML = `<span class="badge bg-success text-white px-2 py-1"><i class="fa-solid fa-check me-1"></i>ไม่มียอดค้างชำระ</span>`;
             document.getElementById('amount').disabled = true;
             document.getElementById('paymentMethod').disabled = true;
             document.getElementById('submitBtn').disabled = true;
             Swal.fire('ยอดเยี่ยม', 'คุณส่งเงินสมทบครบถ้วนแล้ว ไม่มียอดค้างชำระในระบบ ณ ปัจจุบัน', 'info');
           } else {
-            document.getElementById('maxAmountText').innerHTML = `ยอดค้างชำระสูงสุดที่คุณจ่ายได้: <span class="fw-bold text-danger">${currentMaxAllowed} บาท</span>`;
+            document.getElementById('maxAmountText').innerHTML = `${currentMaxAllowed} บาท`;
           }
 
         } else {
           Swal.fire('แจ้งเตือน', 'ไม่พบข้อมูลสมาชิกในระบบ กรุณาลงทะเบียนก่อน', 'warning')
-            .then(() => liff.closeWindow());
+            .then(() => window.location.href = 'https://liff.line.me/2010764982-RCKkyPZG');
         }
       } else {
         liff.login();
@@ -180,7 +198,6 @@
     } else {
       slipSection.style.display = 'none';
       document.getElementById('slipFile').required = false;
-      // Clear file inputs if switched to cash
       document.getElementById('slipFile').value = "";
       document.getElementById('slipBase64').value = "";
       document.getElementById('slipFileName').value = "";
@@ -218,8 +235,8 @@
       const result = await response.json();
       
       if (result.status === 'success') {
-        Swal.fire({ title: 'ทำรายการสำเร็จ', text: result.message, icon: 'success', confirmButtonColor: '#0A2540' })
-          .then(() => liff.closeWindow());
+        Swal.fire({ title: 'ทำรายการสำเร็จ', text: result.message, icon: 'success', confirmButtonColor: '#00D084' })
+          .then(() => window.location.href = 'https://liff.line.me/2010764982-RCKkyPZG');
       } else {
         Swal.fire({ title: 'แจ้งเตือน', text: result.message, icon: 'warning', confirmButtonColor: '#0A2540' });
         submitBtn.disabled = false;
