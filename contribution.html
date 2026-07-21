@@ -37,24 +37,31 @@
     .btn-fintech { background-color: var(--fintech-primary); color: white; border-radius: 10px; padding: 12px; font-weight: 500; border: none; transition: 0.3s; }
     .btn-fintech:hover { background-color: #06182c; color: white; }
     #systemLoading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .info-card { background: #E6F0FF; border-left: 4px solid var(--fintech-accent); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; }
   </style>
 </head>
 <body>
 
 <div id="systemLoading">
   <div class="spinner-border mb-3" style="width: 3rem; height: 3rem; color: var(--fintech-accent);" role="status"></div>
-  <p class="text-muted fw-medium">กำลังเตรียมระบบชำระเงิน...</p>
+  <p class="text-muted fw-medium">กำลังเตรียมระบบและประมวลผลยอดเงิน...</p>
 </div>
 
 <!-- Header -->
 <div class="app-header">
   <h5 class="fw-bold mb-1">กองทุนสวัสดิการชุมชน</h5>
-  <p class="opacity-75 small mb-0">ระบบทำรายการสมทบเงินรายปี</p>
+  <p class="opacity-75 small mb-0">ระบบทำรายการสมทบเงินออนไลน์</p>
 </div>
 
 <div class="container mb-5">
   <div class="card-box">
     <h6 class="mb-4 text-center fw-bold" style="color: var(--fintech-primary);"><i class="fa-solid fa-wallet me-2"></i>ฟอร์มแจ้งชำระเงินสมทบ</h6>
+    
+    <div class="info-card">
+      <strong>สถานะการเงินของคุณ:</strong><br>
+      <span class="text-muted">ยอดที่สมทบไปแล้ว: <span id="paidAmount" class="fw-bold text-success">0 บาท</span></span><br>
+      <span class="text-muted" id="maxAmountText">ยอดค้างชำระสูงสุดที่คุณจ่ายได้: <span class="fw-bold text-danger">กำลังคำนวณ...</span></span>
+    </div>
     
     <form id="contribForm" onsubmit="handleContribSubmit(event)">
       <input type="hidden" id="uid" name="uid">
@@ -66,12 +73,12 @@
       </div>
 
       <div class="mb-3">
-        <label class="form-label small text-muted">จำนวนเงินที่ต้องการสมทบ (สูงสุดไม่เกิน 365 บาท/ปี)</label>
+        <label class="form-label small text-muted">จำนวนเงินที่ต้องการสมทบ</label>
         <div class="input-group">
-          <input type="number" class="form-control" id="amount" name="amount" min="1" max="365" placeholder="ระบุจำนวนเงิน" required oninput="validateAmount(this)">
+          <input type="number" class="form-control" id="amount" name="amount" min="1" placeholder="ระบุจำนวนเงิน" required oninput="validateAmount(this)">
           <span class="input-group-text">บาท</span>
         </div>
-        <div class="form-text small text-secondary">อิงตามระเบียบกองทุน (สูงสุด 365 บาทต่อปี)</div>
+        <div class="form-text small text-secondary" id="amountHelper">ระบบจำกัดยอดไม่เกินยอดค้างชำระจนถึงปีปัจจุบัน</div>
       </div>
 
       <div class="mb-3">
@@ -83,7 +90,7 @@
         </select>
       </div>
 
-      <!-- ส่วนแนบสลิป (แสดงเฉพาะเมื่อเลือกโอนผ่านธนาคาร) -->
+      <!-- ส่วนแนบสลิป -->
       <div class="mb-4 p-3 bg-light rounded-3 border" id="slipSection" style="display: none;">
         <label class="form-label small fw-bold text-dark"><i class="fa-solid fa-receipt me-1"></i>แนบหลักฐานการโอนเงิน (สลิป)</label>
         <input type="file" class="form-control form-control-sm" id="slipFile" accept="image/*" onchange="convertImageToBase64(this)">
@@ -98,8 +105,11 @@
 </div>
 
 <script>
+  // *อย่าลืมอัปเดต LIFF_ID และ GAS_API_URL ล่าสุดของคุณ
   const LIFF_ID = "2010764982-RCKkyPZG"; 
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwW8sY_DdBP-UzdRsixmMzXprGa8yjBBZEGmlCI91qsri0WiEr5qTaXjmV1BFjRY8Mn/exec"; 
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzvBL8li_500RX_YyfREcw7RYAs7rTWPlFwK-dTtfwf6AxbNpJaZDteiYr5Lbig97E/exec"; 
+  
+  let currentMaxAllowed = 0; // เก็บค่าเพดานสูงสุดที่จ่ายได้
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -107,20 +117,39 @@
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
         const uid = profile.userId;
-
         document.getElementById('uid').value = uid;
 
-        // ดึงชื่อสมาชิกจาก Google Sheets เพื่อความถูกต้อง
-        const response = await fetch(`${GAS_API_URL}?action=checkStatus&uid=${uid}`);
-        const result = await response.json();
+        // ดึงสถานะการเงินของสมาชิก
+        const response = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "checkStatus", uid: uid })
+        });
         
+        const result = await response.json();
         document.getElementById('systemLoading').style.display = 'none';
 
         if (result.status === 'registered') {
-          document.getElementById('fullName').value = result.memberData.fullName;
-          document.getElementById('displayFullName').value = result.memberData.fullName;
+          const data = result.memberData;
+          document.getElementById('fullName').value = data.fullName;
+          document.getElementById('displayFullName').value = data.fullName;
+          document.getElementById('paidAmount').innerText = data.totalContribution;
+          
+          currentMaxAllowed = data.outstandingBalance;
+          document.getElementById('amount').max = currentMaxAllowed;
+          
+          if (currentMaxAllowed <= 0) {
+            document.getElementById('maxAmountText').innerHTML = `<span class="fw-bold text-success">คุณได้ชำระครบถ้วนแล้ว ไม่มีค้างชำระปีปัจจุบัน</span>`;
+            document.getElementById('amount').disabled = true;
+            document.getElementById('paymentMethod').disabled = true;
+            document.getElementById('submitBtn').disabled = true;
+            Swal.fire('ยอดเยี่ยม', 'คุณส่งเงินสมทบครบถ้วนแล้ว ไม่มียอดค้างชำระในระบบ ณ ปัจจุบัน', 'info');
+          } else {
+            document.getElementById('maxAmountText').innerHTML = `ยอดค้างชำระสูงสุดที่คุณจ่ายได้: <span class="fw-bold text-danger">${currentMaxAllowed} บาท</span>`;
+          }
+
         } else {
-          Swal.fire('แจ้งเตือน', 'ไม่พบข้อมูลสมาชิกในระบบ กรุณาลงทะเบียนก่อนทำรายการสมทบ', 'warning')
+          Swal.fire('แจ้งเตือน', 'ไม่พบข้อมูลสมาชิกในระบบ กรุณาลงทะเบียนก่อน', 'warning')
             .then(() => liff.closeWindow());
         }
       } else {
@@ -132,9 +161,9 @@
   });
 
   function validateAmount(input) {
-    if (input.value > 365) {
-      input.value = 365;
-      Swal.fire({ toast: true, position: 'top', icon: 'warning', title: 'กำหนดสูงสุดไม่เกิน 365 บาท/ปี', showConfirmButton: false, timer: 2000 });
+    if (input.value > currentMaxAllowed) {
+      input.value = currentMaxAllowed;
+      Swal.fire({ toast: true, position: 'top', icon: 'warning', title: `ระบุได้สูงสุดไม่เกินยอดค้างชำระ (${currentMaxAllowed} บาท)`, showConfirmButton: false, timer: 2500 });
     }
   }
 
@@ -147,6 +176,10 @@
     } else {
       slipSection.style.display = 'none';
       document.getElementById('slipFile').required = false;
+      // Clear file inputs if switched to cash
+      document.getElementById('slipFile').value = "";
+      document.getElementById('slipBase64').value = "";
+      document.getElementById('slipFileName').value = "";
     }
   }
 
@@ -170,7 +203,7 @@
 
     const formData = new FormData(event.target);
     const dataObject = Object.fromEntries(formData.entries());
-    dataObject.action = "handleContribution"; // ระบุ action สำหรับฝั่ง GAS
+    dataObject.action = "handleContribution";
 
     try {
       const response = await fetch(GAS_API_URL, {
@@ -178,23 +211,18 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(dataObject)
       });
-      
       const result = await response.json();
       
       if (result.status === 'success') {
-        Swal.fire({
-          title: 'ทำรายการสำเร็จ',
-          text: result.message,
-          icon: 'success',
-          confirmButtonColor: '#0A2540'
-        }).then(() => liff.closeWindow());
+        Swal.fire({ title: 'ทำรายการสำเร็จ', text: result.message, icon: 'success', confirmButtonColor: '#0A2540' })
+          .then(() => liff.closeWindow());
       } else {
         Swal.fire({ title: 'แจ้งเตือน', text: result.message, icon: 'warning', confirmButtonColor: '#0A2540' });
         submitBtn.disabled = false;
         submitBtn.innerText = "ยืนยันการทำรายการสมทบ";
       }
     } catch (error) {
-      Swal.fire({ title: 'ข้อผิดพลาด', text: 'เซิร์ฟเวอร์ไม่ตอบสนอง', icon: 'error', confirmButtonColor: '#0A2540' });
+      Swal.fire({ title: 'ข้อผิดพลาด', text: 'เครือข่ายมีปัญหาหรือไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', icon: 'error', confirmButtonColor: '#0A2540' });
       submitBtn.disabled = false;
       submitBtn.innerText = "ยืนยันการทำรายการสมทบ";
     }
