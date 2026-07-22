@@ -38,15 +38,63 @@
     .btn-fintech:hover { background-color: #06182c; color: white; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(10,37,64,0.2); }
     #systemLoading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     
-    /* UX/UI: Modern Info Card */
-    .info-card { background: #F0FDF4; border: 1px solid #BBF7D0; padding: 16px; border-radius: 12px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
-    .info-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
-    
-    /* UX/UI: Modern Back Button */
+    /* 🚀 UX/UI: Modern Back Button */
     .modern-back-btn { font-size: 0.9rem; font-weight: 500; transition: all 0.2s ease; cursor: pointer; color: #64748B; margin-bottom: 20px; }
     .modern-back-btn:hover { color: var(--fintech-primary); transform: translateX(-4px); }
     .back-icon { background: #F1F5F9; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 8px; color: #64748B; transition: 0.2s; }
     .modern-back-btn:hover .back-icon { background: #E2E8F0; color: var(--fintech-primary); }
+
+    /* 💎 UX/UI Redesign: ยอดสมทบสะสม (โดดเด่น หรูหรา) */
+    .wealth-card { 
+      background: linear-gradient(135deg, #10B981, #059669); 
+      border-radius: 14px; 
+      padding: 20px; 
+      color: white; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); 
+      margin-bottom: 15px; 
+    }
+    .wealth-icon { 
+      background: rgba(255,255,255,0.2); 
+      width: 50px; 
+      height: 50px; 
+      border-radius: 12px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 1.6rem; 
+      backdrop-filter: blur(4px);
+    }
+
+    /* 🚨 UX/UI Redesign: ยอดค้างชำระ (เล็กแต่เด่นเตะตา) */
+    .debt-alert { 
+      background: #FEF2F2; 
+      border-left: 4px solid #EF4444; 
+      border-radius: 8px; 
+      padding: 12px 16px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      margin-bottom: 24px; 
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08); 
+      transition: 0.3s;
+    }
+    .debt-label { 
+      font-size: 0.75rem; /* เล็กลง */
+      color: #7F1D1D; 
+      font-weight: 600; 
+    }
+    .debt-value { 
+      font-size: 0.85rem; 
+      font-weight: 700; 
+      background: #EF4444; 
+      color: white; 
+      padding: 4px 12px; 
+      border-radius: 20px; 
+      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3); /* โดดเด่นกว่าเดิม */
+    }
   </style>
 </head>
 <body>
@@ -65,25 +113,33 @@
 <div class="container mb-5">
   <div class="card-box">
     
-    <!-- 🔙 ปุ่มกลับหน้าหลัก (Modern UI Redesign) -->
+    <!-- 🔙 ปุ่มกลับหน้าหลัก -->
     <a href="https://liff.line.me/2010764982-RCKkyPZG" class="text-decoration-none d-inline-flex align-items-center modern-back-btn">
       <div class="back-icon"><i class="fa-solid fa-arrow-left"></i></div>
       <span>กลับหน้าหลัก</span>
     </a>
 
     <h6 class="mb-4 text-center fw-bold" style="color: var(--fintech-primary);">
-      <i class="fa-solid fa-wallet me-2 text-success"></i>ฟอร์มแจ้งชำระเงินสมทบ
+      <i class="fa-solid fa-wallet me-2 text-primary"></i>ฟอร์มแจ้งชำระเงินสมทบ
     </h6>
     
-    <div class="info-card">
-      <div class="info-row border-bottom pb-2 border-success border-opacity-25">
-        <span class="text-secondary"><i class="fa-solid fa-piggy-bank me-2"></i>ยอดที่สมทบไปแล้ว</span>
-        <span id="paidAmount" class="fw-bold text-success">0 บาท</span>
+    <!-- 💎 ยอดที่สมทบไปแล้ว (ดีไซน์ใหม่) -->
+    <div class="wealth-card">
+      <div>
+        <span class="d-block mb-1" style="font-size: 0.85rem; opacity: 0.9;">ยอดที่สมทบไปแล้วทั้งหมด</span>
+        <h3 class="fw-bold mb-0" style="letter-spacing: 0.5px;" id="paidAmount">0 บาท</h3>
       </div>
-      <div class="info-row pt-1">
-        <span class="text-secondary" style="font-size: 0.8rem;">ยอดค้างชำระสูงสุดที่คุณจ่ายได้</span>
-        <span id="maxAmountText" class="fw-bold text-danger">กำลังคำนวณ...</span>
+      <div class="wealth-icon">
+        <i class="fa-solid fa-money-bills"></i> <!-- เปลี่ยนเป็นไอคอนแบงค์เงินสด -->
       </div>
+    </div>
+
+    <!-- 🚨 ยอดค้างชำระสูงสุด (ดีไซน์ใหม่ เล็กแต่เด่น) -->
+    <div class="debt-alert" id="debtAlertBox">
+      <div class="debt-label" id="debtLabelText">
+        <i class="fa-solid fa-circle-exclamation me-1 text-danger"></i> ยอดค้างชำระสูงสุดที่จ่ายได้
+      </div>
+      <div id="maxAmountText" class="debt-value">กำลังคำนวณ...</div>
     </div>
     
     <form id="contribForm" onsubmit="handleContribSubmit(event)">
@@ -92,21 +148,21 @@
 
       <div class="mb-3">
         <label class="form-label small text-muted fw-medium">ชื่อ-นามสกุลสมาชิก</label>
-        <input type="text" class="form-control bg-light text-muted" id="displayFullName" readonly>
+        <input type="text" class="form-control bg-light text-muted border-0" id="displayFullName" readonly>
       </div>
 
       <div class="mb-3">
         <label class="form-label small text-muted fw-medium">จำนวนเงินที่ต้องการสมทบ</label>
         <div class="input-group">
-          <input type="number" class="form-control" id="amount" name="amount" min="1" placeholder="ระบุจำนวนเงิน" required oninput="validateAmount(this)">
+          <input type="number" class="form-control fw-bold text-primary" id="amount" name="amount" min="1" placeholder="ระบุจำนวนเงิน" required oninput="validateAmount(this)">
           <span class="input-group-text bg-white text-muted border-start-0">บาท</span>
         </div>
-        <div class="form-text small text-secondary mt-1"><i class="fa-solid fa-circle-info me-1"></i>ระบบจำกัดยอดไม่เกินยอดค้างชำระจนถึงปีปัจจุบัน</div>
+        <div class="form-text small text-secondary mt-1"><i class="fa-solid fa-circle-info me-1"></i>ระบบจำกัดยอดไม่เกินยอดค้างชำระสูงสุด</div>
       </div>
 
       <div class="mb-3">
         <label class="form-label small text-muted fw-medium">ช่องทางการชำระเงิน</label>
-        <select class="form-select" id="paymentMethod" name="paymentMethod" required onchange="toggleSlipSection()">
+        <select class="form-select fw-medium text-dark" id="paymentMethod" name="paymentMethod" required onchange="toggleSlipSection()">
           <option value="" disabled selected>-- เลือกช่องทางชำระเงิน --</option>
           <option value="โอนเงินผ่านธนาคาร">โอนเงินผ่านธนาคาร (แนบสลิป)</option>
           <option value="ชำระผ่านคณะกรรมการ">ชำระเงินสดผ่านคณะกรรมการศูนย์</option>
@@ -122,14 +178,13 @@
         <div class="form-text" style="font-size: 0.75rem; color: #94A3B8;">รองรับไฟล์รูปภาพ (JPG, PNG) ขนาดไม่เกิน 5MB</div>
       </div>
 
-      <button type="submit" class="btn btn-fintech w-100" id="submitBtn">ยืนยันการทำรายการสมทบ</button>
+      <button type="submit" class="btn btn-fintech w-100 shadow-sm" id="submitBtn">ยืนยันการทำรายการสมทบ</button>
     </form>
   </div>
 </div>
 
 <script>
   const LIFF_ID = "2010764982-BltKP85l"; 
-  // ⚠️ ปรับ GAS_API_URL ให้เป็นเส้นเดียวกับหน้า index เพื่อให้ดึงข้อมูลชุดเดียวกัน
   const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzh4Pwae129CGg2IS0V-nL3rPh9CMTIgDYCVTmSgalGKyzASmSWraqz0PHt8G9j6saV/exec"; 
   
   let currentMaxAllowed = 0;
@@ -155,13 +210,25 @@
           const data = result.memberData;
           document.getElementById('fullName').value = data.fullName;
           document.getElementById('displayFullName').value = data.fullName;
+          
+          // แสดงยอดที่สมทบแล้ว (ดึงค่ามาแสดงตรงๆ)
           document.getElementById('paidAmount').innerText = data.totalContribution;
           
           currentMaxAllowed = data.outstandingBalance;
           document.getElementById('amount').max = currentMaxAllowed;
           
+          // 🚀 ปรับ Logic UX กรณีไม่มียอดค้างชำระ
           if (currentMaxAllowed <= 0) {
-            document.getElementById('maxAmountText').innerHTML = `<span class="badge bg-success text-white px-2 py-1"><i class="fa-solid fa-check me-1"></i>ไม่มียอดค้างชำระ</span>`;
+            const alertBox = document.getElementById('debtAlertBox');
+            alertBox.style.background = '#F0FDF4';
+            alertBox.style.borderLeftColor = '#10B981';
+            
+            document.getElementById('debtLabelText').innerHTML = `<i class="fa-solid fa-circle-check me-1 text-success"></i> สถานะยอดค้างชำระ`;
+            document.getElementById('debtLabelText').style.color = '#14532D';
+            
+            document.getElementById('maxAmountText').innerHTML = `ไม่มียอดค้าง`;
+            document.getElementById('maxAmountText').className = 'badge bg-success rounded-pill px-3 py-2 fw-bold shadow-sm';
+            
             document.getElementById('amount').disabled = true;
             document.getElementById('paymentMethod').disabled = true;
             document.getElementById('submitBtn').disabled = true;
