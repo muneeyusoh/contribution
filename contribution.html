@@ -31,7 +31,7 @@
     .payment-option .icon-box { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
     .opt-transfer .icon-box { background: #DBEAFE; color: #2563EB; }
     .opt-cash .icon-box { background: #FEF3C7; color: #D97706; }
-    .form-check-input { display: none; } /* ซ่อน Radio วงกลมแบบเก่า */
+    .form-check-input { display: none; }
 
     /* ⚙️ Form Elements */
     .form-control, .form-select { border-radius: 12px; border: 1px solid #CBD5E1; background-color: #F8FAFC; font-size: 0.95rem; padding: 14px; font-weight: 600; }
@@ -107,7 +107,7 @@
         <input type="file" class="form-control" id="slipFile" accept="image/*" onchange="convertImg(this)">
         <input type="hidden" id="slipBase64" name="slipBase64">
         <input type="hidden" id="slipFileName" name="slipFileName">
-        <small class="text-muted d-block mt-2" style="font-size:0.75rem;">รองรับไฟล์ภาพ JPG, PNG</small>
+        <small class="text-muted d-block mt-2" style="font-size:0.75rem;">รองรับไฟล์ภาพ JPG, PNG (บีบอัดอัตโนมัติ)</small>
       </div>
 
       <!-- 👥 ส่วนแสดงผลเมื่อเลือก "เงินสดผ่านกรรมการ" -->
@@ -116,7 +116,7 @@
         <select class="form-select" id="committeeSelect" name="committeeName">
           <option value="" disabled selected>-- โหลดรายชื่อกรรมการ --</option>
         </select>
-        <small class="text-muted d-block mt-2" style="font-size:0.75rem;">(อ้างอิงจากศูนย์ประสานงานของคุณ)</small>
+        <small class="text-muted d-block mt-2" style="font-size:0.75rem;">(อ้างอิงรายชื่อจากศูนย์ประสานงานของคุณแบบอัตโนมัติ)</small>
       </div>
       
       <button type="submit" class="btn btn-fintech w-100 mt-4" id="submitBtn"><i class="fa-solid fa-paper-plane me-2"></i> ยืนยันทำรายการ</button>
@@ -131,12 +131,8 @@
 
   let maxAllowed = 0;
   let userCenter = "";
-
-  // 1. ❌ ลบตัวแปร COMMITTEE_MAP ทิ้งไปเลย
-
-  let maxAllowed = 0;
-  let userCenter = "";
-  let dynamicCommitteeList = []; // 🌟 2. เพิ่มตัวแปรมารับค่ากรรมการ
+  // 🌟 ไม่ต้อง Hardcode แล้ว ใช้ตัวแปรนี้รับค่าจาก Backend ทันที
+  let dynamicCommitteeList = [];
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -156,15 +152,13 @@
           document.getElementById('amount').max = maxAllowed;
           
           userCenter = res.memberData.center;
-          // 🌟 3. รับรายชื่อกรรมการจาก Backend มาเก็บไว้
-          dynamicCommitteeList = res.memberData.committeeList || ["ไม่มีข้อมูลกรรมการในศูนย์นี้"];
+          // 🌟 รับค่ารายชื่อกรรมการแบบ Dynamic ทันที
+          dynamicCommitteeList = res.memberData.committeeList || ["ไม่มีข้อมูลกรรมการในศูนย์นี้ (โปรดติดต่อแอดมิน)"];
           
           if(maxAllowed <= 0) {
             Swal.fire({ title: 'ยอดเยี่ยม', text: 'คุณสมทบครบถ้วนแล้ว ไม่มียอดค้างชำระในปีนี้ครับ', icon: 'success', confirmButtonColor: '#10B981' }).then(()=>liff.closeWindow());
           }
-        } // ... [โค้ดส่วนอื่นคงเดิม]
-  
-      } else {
+        } else {
           Swal.fire('ข้อผิดพลาด', 'ไม่พบข้อมูลสมาชิกของคุณ', 'error').then(()=>liff.closeWindow());
         }
       } else liff.login();
@@ -174,7 +168,6 @@
     }
   });
 
-  // ล็อกไม่ให้พิมพ์เกินยอดค้างชำระ
   function validateAmount(input) {
     if (parseFloat(input.value) > maxAllowed) {
       input.value = maxAllowed;
@@ -182,11 +175,9 @@
     }
   }
 
-  // 🔄 ระบบเปลี่ยน UI อัตโนมัติเมื่อกดเลือกช่องทาง (Dynamic Form)
   function togglePaymentSection() {
     const pType = document.querySelector('input[name="paymentType"]:checked').value;
     
-    // เคลียร์คลาส Active ของ UI
     document.getElementById('lblTransfer').classList.remove('active');
     document.getElementById('lblCash').classList.remove('active');
     
@@ -203,17 +194,16 @@
       document.getElementById('slipFile').required = false;
       document.getElementById('committeeSelect').required = true;
       
-      // ล้างไฟล์สลิปทิ้งถ้าเผลอกดอัปโหลดไว้
       document.getElementById('slipFile').value = "";
       document.getElementById('slipBase64').value = "";
       document.getElementById('slipFileName').value = "";
       
-      // นำรายชื่อกรรมการตาม "ศูนย์" ของสมาชิกมาใส่ Dropdown
+      // 🌟 เรียกใช้ฟังก์ชันที่เติมรายชื่อ Dynamic
       populateCommitteeDropdown();
     }
   }
 
-// 🌟 4. ปรับฟังก์ชันสร้าง Dropdown ให้ใช้ค่า Dynamic
+  // 🌟 เปลี่ยนการรับค่าจาก COMMITTEE_MAP เป็น dynamicCommitteeList
   function populateCommitteeDropdown() {
     const select = document.getElementById('committeeSelect');
     select.innerHTML = '<option value="" disabled selected>-- โปรดเลือกชื่อกรรมการ --</option>';
@@ -226,7 +216,7 @@
     });
   }
 
-  // 🌟 5. แทนที่ฟังก์ชัน convertImg ด้วยระบบ Client-Side Image Compression
+  // 🌟 Image Compression Algorithm (ลดขนาดไฟล์ก่อนส่งให้เซิร์ฟเวอร์)
   function convertImg(input) { 
     const f = input.files[0]; 
     if (!f) return;
@@ -237,7 +227,7 @@
       const img = new Image();
       img.onload = function() {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800; // บีบอัดความกว้าง 800px เพื่อลดขนาดไฟล์
+        const MAX_WIDTH = 800; // บีบอัดความกว้างสูงสุดที่ 800px เพื่อลดน้ำหนักไฟล์
         let scaleSize = 1;
         if (img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
         
@@ -247,7 +237,7 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         
-        // แปลงเป็น WebP Quality 70% ช่วยลดขนาดไฟล์จาก 5MB เหลือไม่เกิน 200KB
+        // บีบอัดภาพเป็น WebP ลดขนาด Payload ก่อนยิง API
         document.getElementById('slipBase64').value = canvas.toDataURL('image/webp', 0.7); 
       }
       img.src = e.target.result;
@@ -255,17 +245,14 @@
     reader.readAsDataURL(f); 
   }
   
-  // 📤 ดักจับก่อนส่งข้อมูลเข้า Database
   async function submitContrib(e) {
     e.preventDefault(); 
     const btn = document.getElementById('submitBtn'); 
     btn.disabled = true; 
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังทำรายการ...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังอัปโหลดข้อมูล...';
     
-    // ดึงค่าทั้งหมดจาก Form
     const formDataObj = Object.fromEntries(new FormData(e.target));
     
-    // 🛠️ ปรับแต่ง PaymentMethod ส่งไปให้ Backend ประมวลผลถูกต้อง
     if (formDataObj.paymentType === 'transfer') {
       formDataObj.paymentMethod = "โอนเงินผ่านธนาคาร";
       if (!formDataObj.slipBase64) {
@@ -274,9 +261,7 @@
         return;
       }
     } else if (formDataObj.paymentType === 'cash') {
-      // แนบชื่อกรรมการเข้าไปในสถานะเลย เช่น "ชำระผ่านกรรมการ (นายมูฮัมหมัด)"
       formDataObj.paymentMethod = "เงินสดผ่านกรรมการ (" + formDataObj.committeeName + ")";
-      // ลบข้อมูลขยะเผื่อหลุดไป
       delete formDataObj.slipBase64; 
       delete formDataObj.slipFileName;
     }
