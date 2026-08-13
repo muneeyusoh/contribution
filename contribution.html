@@ -132,15 +132,11 @@
   let maxAllowed = 0;
   let userCenter = "";
 
-  // 📝 ฐานข้อมูลรายชื่อกรรมการ (อาแบสามารถแก้ไขชื่อกรรมการในแต่ละศูนย์ได้ที่นี่เลยครับ)
-  const COMMITTEE_MAP = {
-    "ศูนย์ชุมชนปารีย์": ["ดวงกมล ทุมวงค์", "มุนี ยูโซ๊ะ"],
-    "ศูนย์ชุมชนเกียร์": ["นูรีซัน เจ๊ะโก๊ะ ", "กรรมการเกียร์"],
-    "ศูนย์ชุมชนราษฎร์สามัคคี": ["ฉันทนา มะยาอิง", "กัสมะห์วาตี เจะเละ"],
-    "ศูนย์ชุมชนกลันตัน": ["อาหะมะ มอลอ", "กรรมการกลันตัน"],
-    "ศูนย์ชุมชนมาโมง": ["ลอลาณา มะยาอิง", "กรรมการมาโมง"],
-    "ศูนย์ชุมชนสุคิริน": ["อุ่นใจ สงนาวา", "กรรมการสุคิริน"]
-  };
+  // 1. ❌ ลบตัวแปร COMMITTEE_MAP ทิ้งไปเลย
+
+  let maxAllowed = 0;
+  let userCenter = "";
+  let dynamicCommitteeList = []; // 🌟 2. เพิ่มตัวแปรมารับค่ากรรมการ
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -159,13 +155,16 @@
           document.getElementById('debtText').innerText = maxAllowed.toLocaleString();
           document.getElementById('amount').max = maxAllowed;
           
-          // ดึงศูนย์ชุมชนของสมาชิก เพื่อไปโชว์ใน Dropdown กรรมการ
           userCenter = res.memberData.center;
+          // 🌟 3. รับรายชื่อกรรมการจาก Backend มาเก็บไว้
+          dynamicCommitteeList = res.memberData.committeeList || ["ไม่มีข้อมูลกรรมการในศูนย์นี้"];
           
           if(maxAllowed <= 0) {
             Swal.fire({ title: 'ยอดเยี่ยม', text: 'คุณสมทบครบถ้วนแล้ว ไม่มียอดค้างชำระในปีนี้ครับ', icon: 'success', confirmButtonColor: '#10B981' }).then(()=>liff.closeWindow());
           }
-        } else {
+        } // ... [โค้ดส่วนอื่นคงเดิม]
+  
+      } else {
           Swal.fire('ข้อผิดพลาด', 'ไม่พบข้อมูลสมาชิกของคุณ', 'error').then(()=>liff.closeWindow());
         }
       } else liff.login();
@@ -214,13 +213,12 @@
     }
   }
 
-  // เติมรายชื่อกรรมการลงใน Dropdown
+// 🌟 4. ปรับฟังก์ชันสร้าง Dropdown ให้ใช้ค่า Dynamic
   function populateCommitteeDropdown() {
     const select = document.getElementById('committeeSelect');
     select.innerHTML = '<option value="" disabled selected>-- โปรดเลือกชื่อกรรมการ --</option>';
     
-    const committeeList = COMMITTEE_MAP[userCenter] || ["ไม่มีข้อมูลกรรมการในศูนย์นี้"];
-    committeeList.forEach(name => {
+    dynamicCommitteeList.forEach(name => {
       const option = document.createElement('option');
       option.value = name;
       option.text = name;
@@ -228,15 +226,33 @@
     });
   }
 
-  // 🖼️ แปลงรูปสลิปเป็น Base64
+  // 🌟 5. แทนที่ฟังก์ชัน convertImg ด้วยระบบ Client-Side Image Compression
   function convertImg(input) { 
     const f = input.files[0]; 
-    if(f){ 
-      document.getElementById('slipFileName').value = f.name; 
-      const r = new FileReader(); 
-      r.onload=e => document.getElementById('slipBase64').value = e.target.result; 
-      r.readAsDataURL(f); 
+    if (!f) return;
+    document.getElementById('slipFileName').value = f.name; 
+    
+    const reader = new FileReader(); 
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800; // บีบอัดความกว้าง 800px เพื่อลดขนาดไฟล์
+        let scaleSize = 1;
+        if (img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
+        
+        canvas.width = img.width * scaleSize;
+        canvas.height = img.height * scaleSize;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // แปลงเป็น WebP Quality 70% ช่วยลดขนาดไฟล์จาก 5MB เหลือไม่เกิน 200KB
+        document.getElementById('slipBase64').value = canvas.toDataURL('image/webp', 0.7); 
+      }
+      img.src = e.target.result;
     } 
+    reader.readAsDataURL(f); 
   }
   
   // 📤 ดักจับก่อนส่งข้อมูลเข้า Database
